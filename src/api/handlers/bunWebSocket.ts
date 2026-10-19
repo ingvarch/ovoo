@@ -23,6 +23,12 @@ interface WebSocketData {
 
 type BunWebSocket = WebSocket & { data?: WebSocketData };
 
+interface NomadRelay {
+  nomadWs: WebSocket;
+  // Browser messages that arrive while the Nomad connection is still opening
+  pending: Array<string | Uint8Array<ArrayBuffer>>;
+}
+
 interface BunServer {
   upgrade: (req: Request, options?: { data?: unknown }) => boolean;
 }
@@ -36,7 +42,7 @@ const BunWebSocketClient = WebSocket as unknown as new (
 
 export function createBunWebSocketHandlers(config: BunWebSocketConfig) {
   const { nomadAddr, ticketSecret } = config;
-  const wsConnections = new Map<WebSocket, WebSocket>();
+  const wsConnections = new Map<WebSocket, NomadRelay>();
 
   async function handleUpgrade(
     request: Request,
@@ -81,7 +87,14 @@ export function createBunWebSocketHandlers(config: BunWebSocketConfig) {
       try {
         const nomadUrl = buildNomadExecUrl(addr!, params);
         const nomadWs = new BunWebSocketClient(nomadUrl, { headers: { 'X-Nomad-Token': token } });
-        wsConnections.set(ws, nomadWs);
+        const relay: NomadRelay = { nomadWs, pending: [] };
+        wsConnections.set(ws, relay);
+
+        nomadWs.onopen = () => {
+          for (const message of relay.pending.splice(0)) {
+            nomadWs.send(message);
+          }
+        };
 
         nomadWs.onmessage = (event) => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -107,16 +120,21 @@ export function createBunWebSocketHandlers(config: BunWebSocketConfig) {
     },
 
     message(ws: WebSocket, message: string | Buffer) {
-      const nomadWs = wsConnections.get(ws);
-      if (nomadWs && nomadWs.readyState === WebSocket.OPEN) {
-        nomadWs.send(typeof message === 'string' ? message : new Uint8Array(message));
+      const relay = wsConnections.get(ws);
+      if (!relay) return;
+
+      const payload = typeof message === 'string' ? message : new Uint8Array(message);
+      if (relay.nomadWs.readyState === WebSocket.CONNECTING) {
+        relay.pending.push(payload);
+      } else if (relay.nomadWs.readyState === WebSocket.OPEN) {
+        relay.nomadWs.send(payload);
       }
     },
 
     close(ws: WebSocket) {
-      const nomadWs = wsConnections.get(ws);
-      if (nomadWs) {
-        nomadWs.close();
+      const relay = wsConnections.get(ws);
+      if (relay) {
+        relay.nomadWs.close();
         wsConnections.delete(ws);
       }
     },
