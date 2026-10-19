@@ -7,11 +7,16 @@ interface UpstreamRequest {
   token: string | null;
 }
 
-// Fake Nomad that records the exec upgrade request
+// Fake Nomad that records the exec upgrade request and the first message
 function startFakeNomad() {
   let resolveRequest: (req: UpstreamRequest) => void;
   const received = new Promise<UpstreamRequest>((resolve) => {
     resolveRequest = resolve;
+  });
+  let resolveMessage: (message: string | null) => void;
+  const firstMessage = new Promise<string | null>((resolve) => {
+    resolveMessage = resolve;
+    setTimeout(() => resolve(null), 1000);
   });
 
   const server = Bun.serve({
@@ -21,10 +26,14 @@ function startFakeNomad() {
       if (srv.upgrade(req)) return undefined;
       return new Response('upgrade failed', { status: 400 });
     },
-    websocket: { message() {} },
+    websocket: {
+      message(_ws, message) {
+        resolveMessage(String(message));
+      },
+    },
   });
 
-  return { server, received };
+  return { server, received, firstMessage };
 }
 
 function fakeBrowserSocket(nomadAddr: string, token: string) {
@@ -63,5 +72,21 @@ describe('Bun exec WebSocket relay', () => {
     expect(upstream.url.href).not.toContain('secret-nomad-token');
     expect(upstream.url.pathname).toBe('/v1/client/allocation/alloc-1/exec');
     expect(upstream.url.searchParams.get('task')).toBe('web');
+  });
+
+  test('delivers browser messages sent before the Nomad connection opens', async () => {
+    const fake = startFakeNomad();
+    nomad = fake.server;
+    const nomadAddr = `http://localhost:${fake.server.port}`;
+    const { websocket } = createBunWebSocketHandlers({ nomadAddr, ticketSecret: 'test-secret' });
+    const browserWs = fakeBrowserSocket(nomadAddr, 'secret-nomad-token');
+    const resize = JSON.stringify({ tty_size: { width: 120, height: 40 } });
+
+    await websocket.open(browserWs);
+    websocket.message(browserWs, resize);
+    const delivered = await fake.firstMessage;
+    websocket.close(browserWs);
+
+    expect(delivered).toBe(resize);
   });
 });
