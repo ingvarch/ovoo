@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in ovoo does not work as documented
+labels: ["bug"]
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: What you did
+      description: The page and the steps, or the request you sent. Remove ACL tokens and secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: The error, the response or a screenshot.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What should have happened, with a link to the docs if they describe it.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ovoo version
+      description: The release or commit, for example v0.7.0.
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Where ovoo runs
+      options:
+        - Docker
+        - Cloudflare Workers
+        - Local development
+    validations:
+      required: true
+  - type: input
+    id: nomad
+    attributes:
+      label: Nomad version
+      description: The output of `nomad version` on a server, for example 1.10.2.
+    validations:
+      required: true
