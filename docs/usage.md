@@ -1,9 +1,12 @@
 # Usage
 
+What each page of ovoo does and which Nomad capabilities it needs. How the
+token and the requests are protected is in [Security](security.md).
+
 ## Signing in
 
 Paste your Nomad ACL token on the login page. The Nomad address comes from
-`NOMAD_ADDR` on the server (see [Configuration](configuration.md)). After
+`NOMAD_ADDR` on the server (see [Deployment](deployment.md#configuration)). After
 login the token lives in an `httpOnly` cookie, and JavaScript cannot read it
 (see [Security](security.md)).
 
@@ -156,6 +159,8 @@ container:
 - Authorized through short-lived HMAC-signed tickets (see [Security](security.md)).
 - On mobile devices, an accessory bar provides essential keys (`ESC`, `TAB`,
   `Ctrl+C`, `Ctrl+D`, arrows, and clear) and adjusts to the on-screen keyboard.
+
+![Remote exec in the browser](images/exec.png)
 
 ## Allocations & failure analysis
 
@@ -368,3 +373,10 @@ ovoo is designed mobile-first and can be installed as a Progressive Web App:
 - **Mobile remote terminal**: The web terminal provides an accessory bar with
   common mobile keys (`ESC`, `TAB`, `Ctrl+C`, `Ctrl+D`, arrows, and clear) and
   dynamically responds to the virtual keyboard viewport.
+- **Offline app shell**: the installed app caches its own files, so it opens
+  without a network. Cluster data still needs the server.
+
+## Themes
+
+ovoo follows the light or dark theme of your system until you switch it with
+the sun or moon button in the top bar. The browser keeps that choice.

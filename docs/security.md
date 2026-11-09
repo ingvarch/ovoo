@@ -1,5 +1,8 @@
 # Security
 
+How ovoo keeps the Nomad token and the requests to Nomad safe. What each page
+does is in [Usage](usage.md).
+
 ## Authentication
 
 - You paste the Nomad ACL token into the login form once. The server checks

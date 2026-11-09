@@ -97,8 +97,9 @@ certificatesResolvers:
         resolvers:
           - "1.1.1.1:53"
           - "8.8.8.8:53"
-        # Optional: wait for DNS propagation (default 2m)
-        delayBeforeCheck: 10s
+        # Optional: wait before checking DNS propagation (default 0s)
+        propagation:
+          delayBeforeChecks: 10s
 
 providers:
   nomad:
@@ -209,7 +210,7 @@ Edit `/etc/traefik/dynamic.yml`:
 http:
   routers:
     wildcard-router:
-      rule: "HostRegexp(`{subdomain:[a-z]+}.your-domain.com`)"
+      rule: "HostRegexp(`^[a-z]+\\.your-domain\\.com$`)"
       service: your-service
       entryPoints:
         - websecure
@@ -239,7 +240,7 @@ acme: error presenting token: cloudflare: failed to find zone
 
 **Solution**:
 1. Verify Zone Resources in your API token include your domain
-2. Try increasing `delayBeforeCheck` in traefik.yml
+2. Try increasing `propagation.delayBeforeChecks` in traefik.yml
 
 ### Check DNS TXT records
 

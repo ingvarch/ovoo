@@ -1,43 +1,75 @@
 # Development
 
-Two development modes are available, matching the two deployment targets.
+How to run ovoo on your machine, check a change and find your way around the
+code. Running it for other people is in [Deployment](deployment.md).
 
-## Cloudflare Workers development
+## Prerequisites
 
-Uses Wrangler to emulate the Cloudflare Workers environment locally.
+- [Bun](https://bun.sh/) 1.2+. `bun install` also brings Wrangler.
+- A Nomad cluster with ACLs and a token to sign in with.
+- `openssl` to generate the ticket secret.
+
+## Local secrets
+
+The server needs `NOMAD_ADDR` and `TICKET_SECRET`; the settings table is in
+[Deployment](deployment.md#configuration). `TICKET_SECRET` is required in
+development too: without it the Bun server does not start and remote exec
+fails on Wrangler.
+
+For `bun run dev`, Wrangler reads them from `.dev.vars`:
 
 ```bash
-bun run dev          # Vite (frontend) + Wrangler (API)
+cp .dev.vars.example .dev.vars
+# set NOMAD_ADDR to your Nomad API, and TICKET_SECRET to the output of:
+openssl rand -hex 32
 ```
 
-Configure your Nomad server and ticket secret in `.dev.vars` (see
-[Configuration](configuration.md)).
+For `bun run dev:bun`, pass them in the environment, as shown below.
 
-## Bun development
+## Run
 
-Uses the Bun backend directly, useful for Docker deployment testing.
-`NOMAD_ADDR` and `TICKET_SECRET` come from the environment, and the server
-does not start without `TICKET_SECRET`:
+Two modes match the two deployment targets. Both serve the app at
+[http://localhost:5173](http://localhost:5173), where you paste your ACL
+token.
+
+Cloudflare Workers mode runs Vite and Wrangler, which emulates Workers
+locally:
+
+```bash
+bun run dev
+```
+
+Bun mode runs Vite and the Bun server, the one the Docker image uses:
 
 ```bash
 NOMAD_ADDR=http://localhost:4646 TICKET_SECRET=$(openssl rand -hex 32) bun run dev:bun
 ```
 
-## Other commands
+The Vite dev proxy sends API calls to port 3000 in Bun mode, so keep `PORT`
+at its default there.
+
+One part at a time:
 
 ```bash
-bun run dev:vite     # Vite only (no backend)
-bun run dev:worker   # Wrangler only (no frontend dev)
+bun run dev:vite     # Vite only, no backend
+bun run dev:worker   # Wrangler only
 bun run dev:api      # Bun API only
-
-bun run build        # Build frontend
-bun run build:bun    # Build Bun server
-bun run build:all    # Build both
-
-bun run lint         # Run ESLint
-bun run typecheck    # Run TypeScript type checking
-bun test             # Run tests
 ```
+
+## Checks
+
+CI runs these four on every pull request and on every push to `main`. Run
+them before you commit:
+
+```bash
+bun run lint         # ESLint
+bun run typecheck    # tsc --noEmit
+bun test             # tests
+bun run build:all    # frontend and Bun server
+```
+
+`bun run build` builds only the frontend, `bun run build:bun` only the Bun
+server.
 
 ## Project structure
 
@@ -66,9 +98,8 @@ src/
 
 ## Tech stack
 
-- **Runtime**: [Bun](https://bun.sh/) — JavaScript runtime, package manager
-  and bundler.
-- **API**: [Hono](https://hono.dev/) — lightweight web framework.
-- **Frontend**: React 19 + React Router 7 + Tailwind CSS v4.
-- **Build**: Vite (frontend) + Bun bundler (backend).
-- **Deploy**: Cloudflare Workers or Docker (Bun).
+- **Runtime**: [Bun](https://bun.sh/), also the package manager and the
+  server bundler.
+- **API**: [Hono](https://hono.dev/).
+- **Frontend**: React 19, React Router 7 and Tailwind CSS v4, built with Vite.
+- **Deploy**: Cloudflare Workers, or Docker with Bun.
