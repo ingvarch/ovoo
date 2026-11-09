@@ -37,9 +37,12 @@ Internet
 
 ### 1. Install Traefik
 
+Avoid Traefik v3.6.4 to v3.6.6: they reject the encoded slashes in ovoo's
+periodic job pages, see [Behind a reverse proxy](../deployment.md#behind-a-reverse-proxy).
+
 ```bash
-# Download latest Traefik binary
-export TRAEFIK_VERSION="v3.6.6"
+# Download the Traefik binary
+export TRAEFIK_VERSION="v3.7.17"
 wget https://github.com/traefik/traefik/releases/download/${TRAEFIK_VERSION}/traefik_${TRAEFIK_VERSION}_linux_amd64.tar.gz
 tar -xzf traefik_${TRAEFIK_VERSION}_linux_amd64.tar.gz
 sudo mv traefik /usr/local/bin/

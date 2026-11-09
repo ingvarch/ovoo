@@ -7,58 +7,42 @@
 
 # ovoo
 
-**A web UI for HashiCorp Nomad that runs on Cloudflare Workers or in Docker.**
-Formerly Nomad Compass.
-
+[![CI](https://github.com/ingvarch/ovoo/actions/workflows/test.yml/badge.svg)](https://github.com/ingvarch/ovoo/actions/workflows/test.yml)
 [![release](https://img.shields.io/github/v/release/ingvarch/ovoo)](https://github.com/ingvarch/ovoo/releases/latest)
 [![license](https://img.shields.io/github/license/ingvarch/ovoo)](LICENSE)
-
-![ovoo dashboard](docs/images/dashboard.png)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)](tsconfig.json)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-f38020?logo=cloudflare&logoColor=white)](wrangler.toml)
+[![Docker](https://img.shields.io/badge/Docker-2496ed?logo=docker&logoColor=white)](Dockerfile)
 
 </div>
 
-## What it does
+ovoo is a web UI for HashiCorp Nomad, for people who run a Nomad cluster and
+want to see and change it from a browser, on a desktop or a phone. It shows
+the cluster's health and lets you manage jobs, allocations, nodes, storage and
+access, with logs and a terminal in the page. It runs on Cloudflare Workers or
+in Docker, and the Nomad ACL token stays in an `httpOnly` cookie.
+[Igor Churmeev](https://github.com/ingvarch) makes it; it was called Nomad
+Compass before.
 
-- Shows cluster health, resource usage, stability alerts and recent activity
-  on one dashboard.
-- Creates, edits, clones and deletes jobs: containers, resources, environment
-  variables, ports, service health checks, private registries and Traefik
-  ingress tags.
-- Shows the plan diff before a job is submitted, and reverts a job to any
-  earlier version.
-- Tracks rolling deployments with real-time status, canary indicators, one-click canary promotion, and pause/resume/fail controls.
-- Scales task groups dynamically (+/- stepper, presets, zero-scale warning, and optional reason) without resubmitting full job specs.
-- Creates periodic (cron) batch jobs, runs them on demand, pauses their
-  schedule and lists their launches.
-- Dispatches parameterized jobs with their meta keys and a text or file
-  payload, and lists their dispatched jobs.
-- Streams task logs with stdout/stderr filtering.
-- Opens a terminal in a running task. The ACL token stays in an `httpOnly`
-  cookie and never appears in a URL.
-- Browses the files of an allocation, also a finished or failed one, with
-  syntax highlighting and downloads.
-- Lists allocations, failed allocations, nodes, servers and the cluster
-  topology.
-- Restarts, signals and stops single allocations, and reschedules the failed
-  allocations of a job.
-- Manages ACL policies (visual or HCL editor), roles and tokens, and creates
-  and deletes namespaces.
-- Manages encrypted Nomad variables and secrets with masked value inspection,
-  search, and form/JSON editors.
-- Manages Node Pools and scheduler algorithms (spread vs binpack) across cluster
-  nodes.
-- Lists CSI volumes of all namespaces and their plugins, registers and
-  deregisters volumes, and takes volume snapshots.
-- Works on mobile as an installable Progressive Web App (PWA) with a bottom
-  navigation bar, touch-friendly card views, floating actions, offline app shell
-  caching, and virtual terminal keys.
-- Has light, dark and system themes.
+![ovoo dashboard](docs/images/dashboard.png)
 
-![Remote exec in the browser](docs/images/exec.png)
+## Features
 
-## Quick start
+- A dashboard with cluster health, resource usage, stability alerts and recent
+  activity.
+- Jobs: create, edit, clone and revert them in a form with a plan diff, promote
+  canaries, scale task groups, run periodic jobs and dispatch parameterized
+  ones.
+- Task logs, a terminal in a running task, and the files of an allocation,
+  also a finished or failed one.
+- Allocations, nodes, node pools, servers and the topology, with restart,
+  signal, drain and eligibility controls.
+- ACL policies, roles and tokens, namespaces, Nomad variables and CSI volumes.
+- An installable app for phones, with light and dark themes.
 
-With Docker, point the published image at your Nomad API:
+## Usage
+
+Point the published Docker image at your Nomad API:
 
 ```sh
 docker run -p 3000:3000 \
@@ -68,41 +52,40 @@ docker run -p 3000:3000 \
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and paste your ACL token.
+Cloudflare Workers and Docker Compose are in
+[docs/deployment.md](docs/deployment.md).
 
-From source, you need [Bun](https://bun.sh/) 1.2+:
+## Quick start
+
+You need [Bun](https://bun.sh/) 1.2+ and a Nomad cluster with an ACL token,
+see [docs/development.md](docs/development.md). Set `NOMAD_ADDR` to your Nomad
+API:
 
 ```sh
-git clone https://github.com/ingvarch/ovoo.git
-cd ovoo
+git clone https://github.com/ingvarch/ovoo.git && cd ovoo
 bun install
-cp .dev.vars.example .dev.vars
+echo "NOMAD_ADDR=http://localhost:4646" > .dev.vars
+echo "TICKET_SECRET=$(openssl rand -hex 32)" >> .dev.vars
+bun run dev
 ```
 
-In `.dev.vars`, set `NOMAD_ADDR` to your Nomad API and `TICKET_SECRET` to the
-output of `openssl rand -hex 32`. Then run `bun run dev`, open
-[http://localhost:5173](http://localhost:5173) and paste your ACL token.
+Open [http://localhost:5173](http://localhost:5173) and paste your ACL token.
 
 ## Documentation
 
-- [Usage](docs/usage.md): signing in, dashboard, jobs, logs, remote exec,
-  allocations, topology, nodes, node pools, servers, activity, namespaces,
-  variables & secrets, ACL, and mobile PWA.
-- [Configuration](docs/configuration.md): environment variables, the ticket
-  secret and local `.dev.vars`.
-- [Deployment](docs/deployment.md): Cloudflare Workers, Docker, Compose,
-  running behind a reverse proxy, release images.
-- [Development](docs/development.md): dev modes, commands, project structure
-  and tech stack.
-- [Security](docs/security.md): cookies, CSRF, rate limits, signed WebSocket
-  tickets.
-- [Traefik guides](docs/traefik/): Traefik as ingress for Nomad jobs, with
-  the ingress options of the job form.
-
-## Contributing
-
-How to build ovoo, run the checks and send a change is in
-[CONTRIBUTING.md](CONTRIBUTING.md). Security problems are reported privately,
-see [SECURITY.md](SECURITY.md).
+- [Usage](docs/usage.md): signing in, dashboard, jobs, periodic and
+  parameterized jobs, logs, remote exec, allocations and their files,
+  topology, nodes, node pools, storage, servers, activity, namespaces,
+  variables, ACL, mobile app, themes.
+- [Deployment](docs/deployment.md): settings, secrets, Cloudflare Workers,
+  Docker and Compose, release images, running behind a reverse proxy.
+- [Development](docs/development.md): prerequisites, local secrets, dev modes,
+  checks, project structure, tech stack.
+- [Security](docs/security.md): cookies, CSRF, path allowlist, rate limits,
+  response headers, signed WebSocket tickets.
+- [Traefik guides](docs/traefik/README.md): Traefik as ingress for Nomad jobs,
+  Let's Encrypt through the Cloudflare DNS challenge, the ingress options of
+  the job form.
 
 ## License
 
@@ -110,6 +93,12 @@ MIT, see [LICENSE](LICENSE).
 
 Nomad is a trademark of HashiCorp. ovoo is an independent project and is not
 affiliated with or endorsed by HashiCorp.
+
+## Contributing
+
+How to build ovoo, run the checks and send a change is in
+[CONTRIBUTING.md](CONTRIBUTING.md). Security problems are reported privately,
+see [SECURITY.md](SECURITY.md).
 
 ## About the name
 

@@ -1,43 +1,68 @@
 # Deployment
 
-ovoo supports two deployment targets from the same codebase:
+How to run ovoo for other people: on Cloudflare Workers or in Docker, and
+behind a reverse proxy. Running it on your machine is in
+[Development](development.md).
+
+## Resources
+
+ovoo runs from the same code on two targets:
 
 | Target | Best for | Latency | Infrastructure |
 |--------|----------|---------|----------------|
 | Cloudflare Workers | Global access, edge performance | Low (edge) | Serverless |
 | Docker | Self-hosted, on-premise, air-gapped | Depends on location | Container |
 
-## Cloudflare Workers
+Either way you need a Nomad cluster with ACLs on, and its API address must be
+reachable from where ovoo runs. Workers needs a Cloudflare account; Docker
+needs a host that runs containers.
 
-Your app runs on Cloudflare's network close to users. Cloudflare must be able
+## Configuration
+
+| Variable | Description | Default | Used in |
+|----------|-------------|---------|---------|
+| `NOMAD_ADDR` | Nomad API address | Docker: `http://localhost:4646`. Workers: none, required | Both targets |
+| `TICKET_SECRET` | HMAC secret for remote exec tickets (`openssl rand -hex 32`) | None, required | Both targets |
+| `ALLOWED_ORIGINS` | Comma-separated origins allowed by CORS | `http://localhost:5173,http://localhost:3000` | Workers only |
+| `PORT` | Port of the Bun server | `3000` | Docker, `bun run dev:bun` |
+
+## Secrets
+
+`TICKET_SECRET` signs the remote exec tickets (see
+[Security](security.md#remote-exec)). Without it the Docker server does not
+start, and on Workers remote exec fails. Generate one per environment:
+
+```bash
+openssl rand -hex 32
+```
+
+On Workers, `NOMAD_ADDR` and `TICKET_SECRET` are Worker secrets, set with
+`wrangler secret put` in the steps below. In Docker they are environment
+variables of the container.
+
+## Deploy
+
+### Cloudflare Workers
+
+The app runs on Cloudflare's network close to users. Cloudflare must be able
 to reach your Nomad API: give it a public HTTPS address, for example through
 a Cloudflare Tunnel, and keep Nomad ACLs on.
 
-**Prerequisites:**
-
-- Cloudflare account.
-- Wrangler CLI (`bun add -g wrangler`).
-
-**Setup:**
+You need a Cloudflare account and the Wrangler CLI (`bun add -g wrangler`).
 
 ```bash
-# Login to Cloudflare
 wrangler login
 
-# Set Nomad server address as a secret
 wrangler secret put NOMAD_ADDR
 # Enter: https://your-nomad-server.example.com
 
-# Set the ticket secret
 wrangler secret put TICKET_SECRET
 # Enter the output of: openssl rand -hex 32
 
-# Deploy
 bun run deploy:cf
 ```
 
-Your app will be available at
-`https://ovoo.<your-subdomain>.workers.dev`.
+The app is then at `https://ovoo.<your-subdomain>.workers.dev`.
 
 A custom domain is an optional `wrangler.toml` addition:
 
@@ -59,15 +84,15 @@ wrangler preview base-config secret put TICKET_SECRET
 
 Preview URLs are public; Cloudflare Access can require sign-in for them.
 
-## Docker
+### Docker
 
-For self-hosted, on-premise, or air-gapped environments.
+For self-hosted, on-premise or air-gapped environments.
 
 A release tag (`v*.*.*`) builds a multi-arch image (amd64, arm64) and pushes
 it to `ghcr.io/ingvarch/ovoo` as the version tag and as `latest`. Any `v*`
-tag also creates a GitHub Release with auto-generated notes.
+tag also creates a GitHub Release with generated notes.
 
-**Run the published image:**
+Run the published image:
 
 ```bash
 docker run -d \
@@ -78,7 +103,7 @@ docker run -d \
   ghcr.io/ingvarch/ovoo:latest
 ```
 
-**Build it yourself:**
+Build it yourself:
 
 ```bash
 bun run docker:build
@@ -86,7 +111,7 @@ bun run docker:build
 docker build -t ovoo .
 ```
 
-**Docker Compose:**
+With Docker Compose:
 
 ```yaml
 services:
@@ -133,5 +158,5 @@ the decoded path.
 
 [traefik-12437]: https://github.com/traefik/traefik/issues/12437
 
-The guides in [traefik/](traefik/) set up Traefik as ingress for Nomad jobs,
-together with the ingress options of the job form.
+The [Traefik guides](traefik/README.md) set up Traefik as ingress for Nomad
+jobs, together with the ingress options of the job form.
