@@ -1,36 +1,37 @@
 version: 2
 updates:
-  # npm dependencies (handled by bun, lockfile: bun.lock)
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: bun
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: cron
+      cronjob: '0 6 * * *'
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
     groups:
-      react:
-        patterns:
-          - "react*"
-          - "@types/react*"
-      typescript:
-        patterns:
-          - "typescript*"
-          - "@typescript-eslint/*"
-      eslint:
-        patterns:
-          - "eslint*"
-      vite:
-        patterns:
-          - "vite*"
-          - "@vitejs/*"
-      tailwind:
-        patterns:
-          - "tailwindcss*"
-          - "autoprefixer*"
-          - "postcss*"
+      bun-minor-patch:
+        update-types: [minor, patch]
 
-  # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: docker
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: cron
+      cronjob: '0 6 * * *'
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      docker-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: cron
+      cronjob: '0 6 * * *'
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
