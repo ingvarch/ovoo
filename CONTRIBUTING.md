@@ -1,49 +1,54 @@
 # Contributing to ovoo
 
-Bug reports, ideas and pull requests are welcome. A security problem is
-reported privately, not in an issue: see [SECURITY.md](SECURITY.md).
+Thanks for helping. This file explains how to report problems and how to send a change.
 
-## Before you write code
+## Report a bug or ask for a feature
 
-For anything bigger than a small fix, open an issue first, so the shape of
-the change is agreed before the work is done.
+Open an issue with one of the [issue templates](https://github.com/ingvarch/ovoo/issues/new/choose).
+For a bug, include what you did, what happened and what you expected, the ovoo and Nomad versions,
+and whether ovoo runs in Docker or on Cloudflare Workers. Remove ACL tokens and secrets.
 
-## Build and run
+For anything bigger than a small fix, open an issue first, so the shape of the change is agreed
+before the work is done.
 
-You need [Bun](https://bun.sh/) 1.2+ and a running Nomad cluster with an ACL
-token:
+Do not report security problems in public issues. See [SECURITY.md](SECURITY.md).
 
-```sh
-bun install
-bun run dev
-```
+## Set up
 
-```sh
-bun run lint        # ESLint
-bun run typecheck   # tsc --noEmit
-bun test            # tests
-bun run build:all   # frontend + Bun server
-```
+You need [Bun](https://bun.sh/) 1.2+ and a running Nomad cluster with an ACL token. Local setup and
+the checks are described in [docs/development.md](https://github.com/ingvarch/ovoo/blob/main/docs/development.md).
 
-All four are green before every commit — CI does not run them yet.
+## Make a change
 
-## How a change is made
+1. Create a branch from `main` named `<type>/<short-name>`, for example `fix/exec-early-messages`.
+2. Write a failing test that describes the behavior you want, then the code that makes it pass.
+   This holds for small functions too.
+3. Run the [checks](https://github.com/ingvarch/ovoo/blob/main/docs/development.md#checks). The
+   output must have no warnings and no failures. CI runs the same checks on every pull request.
+4. Update the files in `docs/` if the change alters what users or operators see.
+5. Commit with a [conventional commit](https://www.conventionalcommits.org/) message:
+   `type(scope): description`, imperative, lower case.
+   - Types: `feat`, `fix`, `refactor`, `docs`, `chore`.
+   - Scopes: the part of the app, such as `ui`, `jobs`, `allocations`, `nodes`, `storage`, `exec`,
+     `logs`, `pwa`, `api`, `security`, and `deps`, `ci`, `deploy`, `release` for maintenance.
+6. Open a pull request and fill in the template. Link the issue it closes with `Closes #N`.
 
-- The test comes first. Write the test that names the behaviour, watch it
-  fail, then write the smallest code that passes it. This holds for small
-  functions too.
-- Keep both deployment targets working: Cloudflare Workers and Docker. A
-  server change is verified against both entries (`entry.cloudflare.ts`,
-  `entry.bun.ts`).
-- The Nomad token stays in the `httpOnly` cookie and never reaches a URL, a
-  log line, a response body or browser storage.
+A change also keeps these:
+
+- Both deployment targets work: Cloudflare Workers and Docker. A server change is verified against
+  both entries (`entry.cloudflare.ts`, `entry.bun.ts`).
+- The Nomad token stays in the `httpOnly` cookie and never reaches a URL, a log line, a response
+  body or browser storage.
 - Comments are short and say why, not what the line does.
 
-## Commits and pull requests
+Pull requests are merged with rebase or squash, so `main` keeps a linear history.
 
-Commit messages and pull request titles are conventional commits, with the
-part of the app as the scope: `feat(ui): ...`, `fix(api): ...`,
-`fix(exec): ...`, `chore(deps): ...`.
+The rules for agents working in this repository are in [AGENTS.md](https://github.com/ingvarch/ovoo/blob/main/AGENTS.md).
 
-One pull request is one change. Fill in the pull request template — every
-section that applies.
+## Code of conduct
+
+Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## License
+
+By contributing, you agree that your contributions are licensed under the [MIT License](https://github.com/ingvarch/ovoo/blob/main/LICENSE).

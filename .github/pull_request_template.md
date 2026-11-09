@@ -1,11 +1,16 @@
 ## What changes
 
-<!-- What the change does for someone using ovoo, and why. Link the issue: Closes #123 -->
+<!-- What this does for someone using ovoo, and why. -->
+
+## Issues
+
+<!-- Closes #N -->
 
 ## Checklist
 
-- [ ] The test for this change was written first and failed
-- [ ] `bun run lint`, `bun run typecheck`, `bun test` and `bun run build:all` are green
+- [ ] A test describes the new behavior and failed before the change
+- [ ] The [checks](https://github.com/ingvarch/ovoo/blob/main/docs/development.md#checks) pass with no warnings
+- [ ] `docs/` updated if users or operators see a difference
 - [ ] The title is a conventional commit: `feat(ui): ...`, `fix(api): ...`, `fix(exec): ...`
 
 ### If the change touches the server (`src/api`, `src/lib`, `src/entry.*`)
@@ -22,5 +27,5 @@
 
 ### If the change adds configuration
 
-- [ ] The variable is in the table in `docs/configuration.md`, `.dev.vars.example` and `docker-compose.yml`
+- [ ] The variable is in the table in `docs/deployment.md`, `.dev.vars.example` and `docker-compose.yml`
 - [ ] A secret is set with `wrangler secret put` in the Workers deploy steps
